@@ -80,3 +80,19 @@ def main():
     finally:
         robot.cleanup()     
 ```
+
+## Pin mappings
+| Component               | Description     | GPIO  | Pin Number |
+|-------------------------|-----------------|-------|------------|
+| MotorA - Duty Cycle     | PWM-A           | GPIO18| Pin 12     |
+| MotorB - Duty Cycle     | PWM-B           | GPIO13| Pin 33     |
+| MotorA - Direction      | AIN1            | GPIO23| Pin 16     |
+| MotorA - Direction      | AIN2            | GPIO24| Pin 18     |
+| MotorB - Direction      | BIN1            | GPIO27| Pin 13     |
+| MotorB - Direction      | BIN2            | GPIO22| Pin 15     |
+| Driver on/off           | STBY            | GPIO17| Pin 11     |
+| SERVOA                  |                 | GPIO12| Pin 32     |
+| SERVOB                  |                 | GPIO19| Pin 35     |
+| Green LED               |                 | GPIO26| Pin 37     |
+| Yellow LED              |                 | GPIO20| Pin 38     |
+| Red LED                 |                 | GPIO16| Pin 36     |
