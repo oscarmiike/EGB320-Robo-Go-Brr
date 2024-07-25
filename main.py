@@ -15,7 +15,7 @@ Mobility ---
         
 LEDs ---    
     : set_color(LED.GREEN) 
-    LEDs take need a pin assignment from the config file ( from config import LED )
+    LEDs need a pin assignment from the config file ( from config import LED )
     As long as you import LED from config you can use LED.GREEN/RED/YELLOW as arguments to set_color()
 """
 
