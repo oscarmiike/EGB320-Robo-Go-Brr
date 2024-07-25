@@ -5,7 +5,7 @@ The structure of this project is as below, sub-systems are organised into direct
 
 To use the sub-system modules (e.g., mobility, item collection) in `main.py`, their classes must be instantiated in the `__init__` method of your main class (e.g., `RoboGoBrr`).
 
-`terminal_app.py` has some neat features that I've been using for testing, but it's a bit messy. Might clean it up if we find a need for it during integration/testing.
+`terminal_app.py` has some neat features that I've been using for testing, but it's a bit messy. Might clean it up if we find a need for it during integration/testing .
 
 ```
 ├── helpers
