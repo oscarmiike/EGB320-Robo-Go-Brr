@@ -45,8 +45,8 @@ class MotorController:
             GPIO.setup(self.motor_gpio.STBY_PIN, GPIO.OUT)
             GPIO.output(self.motor_gpio.STBY_PIN, GPIO.HIGH)
 
-            self.pwm_a = GPIO.PWM(self.motor_gpio.PWM_A_PIN, 30000)
-            self.pwm_b = GPIO.PWM(self.motor_gpio.PWM_B_PIN, 30000)
+            self.pwm_a = GPIO.PWM(self.motor_gpio.PWM_A_PIN, 20000)
+            self.pwm_b = GPIO.PWM(self.motor_gpio.PWM_B_PIN, 20000)
             self.pwm_a.start(0)
             self.pwm_b.start(0)
             
@@ -57,11 +57,11 @@ class MotorController:
         """ Sets the speed and direction of the motor using the PWM channel and direction pins. """
 
         if not reverse:
-            GPIO.output(direction_pin1, GPIO.HIGH if speed >= 0 else GPIO.LOW)
-            GPIO.output(direction_pin2, GPIO.LOW if speed >= 0 else GPIO.HIGH)
-        else:
             GPIO.output(direction_pin1, GPIO.LOW if speed >= 0 else GPIO.HIGH)
             GPIO.output(direction_pin2, GPIO.HIGH if speed >= 0 else GPIO.LOW)
+        else:
+            GPIO.output(direction_pin1, GPIO.HIGH if speed >= 0 else GPIO.LOW)
+            GPIO.output(direction_pin2, GPIO.LOW if speed >= 0 else GPIO.HIGH)
 
         pwm_channel.ChangeDutyCycle(abs(speed))
 
