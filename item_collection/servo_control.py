@@ -78,7 +78,7 @@ class ServoController:
         Calibrate the servo by manually adjusting the duty cycle.
         """
         print("Calibrating servo...")
-        print("Press 'a' to decrease duty cycle, 'd' to increase, 's' to set stop position, 'q' to finish calibration")
+        print("Press 'a' to decrease duty cycle, 'd' to increase, 's' to set stop position, 'q' to finish calibration (follow by Enter)")
         current_duty = self.servo_params.SERVO_MID_DUTY
         
         while True:

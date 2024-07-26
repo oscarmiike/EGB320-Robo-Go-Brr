@@ -66,13 +66,13 @@ class RoboGoBrr:
             #self.led_controller.party_time() # party time, excellent
             self.led_controller.set_color(LED.GREEN) 
             
-            linear_velocity = -0.0689  # m/s
+            linear_velocity = 0.08  # m/s
             angular_velocity = 0.0  # rad/s
 
             # Call the function to set velocity and angle
             self.motor_controller.set_velocity(linear_velocity, angular_velocity)
 
-            time.sleep(30)
+            time.sleep(4)
 
             self.motor_controller.set_velocity(0, 0) # or self.motor_controller.stop_motors()
 

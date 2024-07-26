@@ -31,7 +31,10 @@ def execute_command_array(motor_controller, command_array):
 
 
 def command_line_control(motor_controller, servo_controller, led_controller):
+    """ChatGpt refactor - my function was getting a bit monolithic"""
+    
     pretty_print("Control the robot using the following keys:", Pretty.HEADER)
+    
     control_instructions = [
         ("W/S", "Forward/Backward"),
         ("A/D", "Left/Right turn"),
@@ -88,7 +91,14 @@ def command_line_control(motor_controller, servo_controller, led_controller):
         else:
             state[index_key] = min(len(velocities) - 1, state[index_key] + 1)
             pretty_print("Decreasing velocity", Pretty.YELLOW)
-        update_movement()
+        
+        # Apply the new velocity immediately after the change, accounting for the direction
+        current_velocity = velocities[state[index_key]]
+        if state['current_mode'] == 'linear':
+            motor_controller.set_velocity(current_velocity[0] * state['current_direction'], 0)
+        else:
+            motor_controller.set_velocity(0, current_velocity[1] * state['current_direction'])
+
 
     def handle_stop():
         state['current_direction'] = 0
@@ -136,20 +146,25 @@ def command_line_control(motor_controller, servo_controller, led_controller):
     while True:
         key = getch().lower()
         
+        # Check if the key is in the key_handlers map
         if key in key_handlers:
-            key_handlers[key](key) if key in 'wsad' else key_handlers[key]()
-        elif key == 'q':
+            if key in 'wsad':  # These keys control movement, so pass the key to update_movement
+                key_handlers[key](key)
+            else:  # Other keys (like space, servo control, etc.) don't need to call update_movement
+                key_handlers[key]()
+        
+        elif key == 'q':  # Quit key
             pretty_print("Returning to main menu", Pretty.RED)
             return
-        else:
+        
+        else:  # Invalid input handling
             pretty_print("Invalid input. Use W, A, S, D, M, N, Space, Z, X, C, 0, or Q.", Pretty.RED)
 
-        if key not in 'wsad':
-            update_movement()
-
-        print_velocities(state['current_mode'], state['current_direction'],
-                         linear_velocities[state['linear_index']][0],
-                         angular_velocities[state['angular_index']][1])
+        # Only print velocities when movement keys (wsad) are pressed
+        if key in 'wsad':
+            print_velocities(state['current_mode'], state['current_direction'],
+                            linear_velocities[state['linear_index']][0],
+                            angular_velocities[state['angular_index']][1])
 
         if state['start_time']:
             print_timer(state['start_time'])
@@ -159,7 +174,7 @@ def display_menu():
     pretty_print("\nRobot Control Menu:", Pretty.HEADER)
     pretty_print("1. Execute command array", Pretty.BLUE)
     pretty_print("2. Manual command-line control", Pretty.BLUE)
-    pretty_print("3. Calibrate servo", Pretty.BLUE)
+    pretty_print("3. Calibrate servo (untested since refactor)", Pretty.BLUE)
     pretty_print("Q. Quit", Pretty.BLUE)
     pretty_print(f"{Pretty.GREEN}Enter your choice (1-4, Q to quit): ", Pretty.ENDC)
 
