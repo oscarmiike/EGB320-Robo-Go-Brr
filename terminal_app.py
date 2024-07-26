@@ -52,8 +52,8 @@ def command_line_control(motor_controller, servo_controller, led_controller):
     angular_velocities = sorted(MotorParams.ANGULAR_VELOCITY_MAP.keys(), key=lambda x: x[1], reverse=True)
 
     state = {
-        'linear_index': 0,
-        'angular_index': 0,
+        'linear_index': 4,
+        'angular_index': 4,
         'current_mode': 'linear',
         'current_direction': 0,
         'start_time': None

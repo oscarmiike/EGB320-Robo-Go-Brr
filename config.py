@@ -20,8 +20,8 @@ class LED:
 """
 class MotorParams:
     # terminal_app input vars
-    _MAX_LINEAR_VELOCITY = 0.1
-    _MAX_ANGULAR_VELOCITY = 0.5
+    _MAX_LINEAR_VELOCITY = 0.05
+    _MAX_ANGULAR_VELOCITY = 0.05
     _LINEAR_VELOCITY_STEP = 0.01
     _ANGULAR_VELOCITY_STEP = 0.1
     
