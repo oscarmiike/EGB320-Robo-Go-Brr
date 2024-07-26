@@ -102,3 +102,24 @@ def main():
 | Green LED               |                 | GPIO26| Pin 37     |
 | Yellow LED              |                 | GPIO20| Pin 38     |
 | Red LED                 |                 | GPIO16| Pin 36     |
+
+
+## Terminal Control
+| Key   | Action                                   |     |
+|-------|------------------------------------------|-----|
+| W     | Move forward                             | Mobility    |
+| S     | Move backward                            | Mobility    |
+| A     | Turn left                                | Mobility    |
+| D     | Turn right                               | Mobility    |
+| Space | Stop all motors                          | Mobility    |
+| M     | Increase velocity                        | Mobility    |
+| N     | Decrease velocity                        | Mobility    |
+| Z     | Rotate servo backward                    | Item Collection    |
+| X     | Stop servo                               | Item Collection    |
+| C     | Rotate servo forward                     | Item Collection    |
+| 0     | Calibrate servo                          | Item Collection    |
+| B     | Increase left wheel bias                 | Mobility    |
+| V     | Decrease left wheel bias                 | Mobility    |
+| K     | Increase right wheel bias                | Mobility    |
+| L     | Decrease right wheel bias                | Mobility    |
+| Q     | Return to main menu                      |     |

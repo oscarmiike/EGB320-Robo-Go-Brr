@@ -25,6 +25,10 @@ class LEDController:
         self.turn_off_all()
         self.e = threading.Event()
 
+        self.party_time()
+        time.sleep(0.3)
+        self.stop_party()
+
     def turn_off_all(self):
         """Turn off all LEDs"""
         GPIO.output(self.led_pins.GREEN, GPIO.LOW)
@@ -62,5 +66,7 @@ class LEDController:
         getmode() returns either None, GPIO.BOARD, or GPIO.BCM
         """
         if GPIO.getmode() is not None:
-            self.stop_party()
+            self.turn_off_all()
+            if not self.e.is_set():
+                self.stop_party()
             GPIO.cleanup()
