@@ -192,6 +192,8 @@ def main():
         motor_controller.initialise_gpio()
         servo_controller.initialise_gpio()
         led_controller.__init__()
+        led_controller.party_time()
+        led_controller.stop_party()
 
         command_array = [
             (0.2, 0, 2),
