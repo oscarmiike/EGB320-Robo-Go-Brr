@@ -53,7 +53,7 @@ class MotorParams:
     """
     LINEAR_VELOCITY_MAP = {
         # format: (linear_velocity, angular_velocity) > (PWM_LEFT, PWM_RIGHT)
-        (0.1855, 0.0): (100, 100),  
+        (0.5, 0.0): (100, 100),  
         (0.1032, 0.0): (95, 95),  
         (0.1013, 0.0): (90, 90),
         (0.0929, 0.0): (85, 85),
@@ -80,7 +80,7 @@ class MotorParams:
     
     ANGULAR_VELOCITY_MAP = {
         # format: (linear_velocity, angular_velocity) > (PWM_LEFT, PWM_RIGHT)
-        (0.0, 2.066): (100, -100),
+        (0.0, 6): (100, -100),
         (0.0, 1.153): (90, -90),
         (0.0, 0.935): (80, -80),
         (0.0, 0.884): (70, -70),

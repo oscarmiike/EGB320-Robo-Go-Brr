@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from config import ServoGpio, ServoParams
 import time
+import threading
 
 """
 ▀█▀ ▀█▀ █▀▀ █▀▄▀█     
@@ -43,6 +44,7 @@ class ServoController:
             print("Servo GPIO pins and PWM initialised")
 
 
+    # Allows control of both servos from the same function, "arm" servo untested..
     def set_servo_speed(self, servo_name, speed):
         """ 
         pass "arm" or "gripper" to servo_name..
@@ -72,6 +74,9 @@ class ServoController:
             else:
                 print(f"{servo_name.capitalize()} servo rotating backward at {abs(speed)}% speed")
 
+
+    def arm_angle(self, angle):
+        pass
 
     def calibrate(self):
         """

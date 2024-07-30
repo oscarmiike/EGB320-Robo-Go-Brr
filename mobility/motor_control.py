@@ -54,58 +54,55 @@ class MotorController:
 
 
     def set_motor_speed(self, pwm_channel, direction_pin1, direction_pin2, speed, reverse=False):
-        """ Sets the speed and direction of the motor using the PWM channel and direction pins. """
-
-        if not reverse:
-            GPIO.output(direction_pin1, GPIO.LOW if speed >= 0 else GPIO.HIGH)
-            GPIO.output(direction_pin2, GPIO.HIGH if speed >= 0 else GPIO.LOW)
+        
+        if speed == 0:
+            GPIO.output(direction_pin1, GPIO.LOW)
+            GPIO.output(direction_pin2, GPIO.LOW)
+            print(f"Stopping motor on pin {direction_pin1}")
+            print(f"Stopping motor on pin {direction_pin2}")
+            pwm_channel.ChangeDutyCycle(0)
+            print(f"Setting PWM to 0")
         else:
-            GPIO.output(direction_pin1, GPIO.HIGH if speed >= 0 else GPIO.LOW)
-            GPIO.output(direction_pin2, GPIO.LOW if speed >= 0 else GPIO.HIGH)
+            if not reverse:
+                GPIO.output(direction_pin1, GPIO.LOW if speed > 0 else GPIO.HIGH)
+                GPIO.output(direction_pin2, GPIO.HIGH if speed > 0 else GPIO.LOW)
+            else:
+                GPIO.output(direction_pin1, GPIO.HIGH if speed > 0 else GPIO.LOW)
+                GPIO.output(direction_pin2, GPIO.LOW if speed > 0 else GPIO.HIGH)
 
-        pwm_channel.ChangeDutyCycle(abs(speed))
+            pwm_channel.ChangeDutyCycle(abs(speed))
 
 
     def set_velocity(self, linear_velocity, angular_velocity):
-        """Sets the velocity of the robot based on linear and angular velocity."""
         
-        self.initialise_gpio()
+        """ Sets the velocity of the robot based on linear and angular velocity. """
+        
+        self.initialise_gpio() 
 
         if linear_velocity == 0 and angular_velocity == 0:
             self.stop_motors()
             return
-        
-        if linear_velocity != 0 and angular_velocity != 0:
-            pretty_print("Robot not set up to move in both linear and angular directions at the same time.", Pretty.HEADER)
-            self.robot_says_no()
-            return
 
-        # figure out if we're given a linear or angular velocity
-        if abs(linear_velocity) > 0:
-            # Linear movement
-            velocity_map = self.motor_params.LINEAR_VELOCITY_MAP
-            target_velocity = abs(linear_velocity)
-            pwm_left, pwm_right = self.get_pwm_for_velocity(velocity_map, target_velocity, is_linear=True)
-            
-            # Adjust for reverse, maps are all positive duty cycles
-            if linear_velocity < 0:
-                pwm_left, pwm_right = -pwm_left, -pwm_right
-        else:
-            # Angular movement
-            velocity_map = self.motor_params.ANGULAR_VELOCITY_MAP
-            target_velocity = abs(angular_velocity)
-            pwm_left, pwm_right = self.get_pwm_for_velocity(velocity_map, target_velocity, is_linear=False)
-            
-            # Adjust for right turn, map is for left turn. idk.
-            if angular_velocity > 0:
-                pwm_left, pwm_right = pwm_right, pwm_left
+        # Convert linear and angular velocity to wheel speeds
+        left_speed = (linear_velocity - angular_velocity *
+                      self.motor_params.WHEEL_BASE / 2) / self.motor_params.WHEEL_RADIUS
+        right_speed = (linear_velocity + angular_velocity *
+                       self.motor_params.WHEEL_BASE / 2) / self.motor_params.WHEEL_RADIUS
+
+        # Scale the speeds
+        max_wheel_speed = self.motor_params.MAX_SPEED / self.motor_params.WHEEL_RADIUS
+        left_pwm = (left_speed / max_wheel_speed) * 100
+        right_pwm = (right_speed / max_wheel_speed) * 100
+
+        # Clamp the PWM values between -100 and 100
+        left_pwm = max(min(left_pwm, 100), -100)
+        right_pwm = max(min(right_pwm, 100), -100)
+
+        print(f"Left Wheel PWM: {left_pwm:.2f}%, Right Wheel PWM: {right_pwm:.2f}%")
 
         # Set motor speeds
-        self.set_motor_speed(self.pwm_a, self.motor_gpio.AIN1_PIN, self.motor_gpio.AIN2_PIN, pwm_left)
-        self.set_motor_speed(self.pwm_b, self.motor_gpio.BIN1_PIN, self.motor_gpio.BIN2_PIN, pwm_right)
-        
-        print(f"Left PWM: {pwm_left}, Right PWM: {pwm_right}")
-        print(f"Linear Velocity: {linear_velocity:.4f} m/s, Angular Velocity: {angular_velocity:.4f} rad/s")
+        self.set_motor_speed(self.pwm_a, self.motor_gpio.AIN1_PIN,self.motor_gpio.AIN2_PIN, left_pwm)
+        self.set_motor_speed(self.pwm_b, self.motor_gpio.BIN1_PIN,self.motor_gpio.BIN2_PIN, right_pwm, reverse=True)
 
 
     def get_pwm_for_velocity(self, velocity_map, target_velocity, is_linear):

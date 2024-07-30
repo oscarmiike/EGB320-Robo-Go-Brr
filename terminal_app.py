@@ -1,6 +1,8 @@
 from mobility.motor_control import MotorController
 from item_collection.servo_control import ServoController
 from helpers.led import LEDController
+import item_collection.servo as servo
+import item_collection.servoControl as claw
 from helpers.common import getch, pretty_print, execute_command_array, print_velocities, print_timer
 from config import Pretty, MotorParams, LED
 import time
@@ -40,9 +42,10 @@ def command_line_control(motor_controller, servo_controller, led_controller):
         ("A/D", "Left/Right turn"),
         ("M/N", "Increase/Decrease current velocity"),
         ("Space", "Stop all motors"),
-        ("Z/C", "Rotate servo backward/forward"),
-        ("X", "Stop servo"),
-        ("0", "Calibrate servo"),
+        ("Z/X", "Open/Close claw"),
+        ("1", "Low Arm Position"),
+        ("2", "Mid Arm Position"),
+        ("3", "High Arm Position"),
         ("Q", "Return to main menu")
     ]
     for key, action in control_instructions:
@@ -99,21 +102,27 @@ def command_line_control(motor_controller, servo_controller, led_controller):
         else:
             motor_controller.set_velocity(0, current_velocity[1] * state['current_direction'])
 
-
     def handle_stop():
         state['current_direction'] = 0
         motor_controller.set_velocity(0, 0)
-        servo_controller.set_servo_speed("arm", 0)
         led_controller.turn_off_all()
         pretty_print("Stopping all motors", Pretty.RED)
         if state['start_time']:
             print_timer(state['start_time'])
             state['start_time'] = None
 
-    def handle_servo(speed):
-        servo_controller.set_servo_speed("arm", speed)
-        action = "forward" if speed > 0 else "backward" if speed < 0 else "stop"
-        pretty_print(f"Rotating servo {action}", Pretty.BLUE if speed != 0 else Pretty.RED)
+    def handle_servo(command):
+        if command == 3:
+            claw.clawUp()
+        elif command == 2:
+            claw.clawMid()
+        elif command == 1:
+            claw.clawDown()
+        elif command == "close":
+            claw.closeClaw()
+        elif command == "open":
+            claw.openClaw()
+        pretty_print(f"Executed servo command: {command}", Pretty.BLUE)
 
     def handle_bias(left, right):
         motor_controller.tweak_bias(left, right, state['current_direction'])
@@ -129,10 +138,11 @@ def command_line_control(motor_controller, servo_controller, led_controller):
         ' ': handle_stop,
         'm': lambda: handle_velocity_change(True),
         'n': lambda: handle_velocity_change(False),
-        'z': lambda: handle_servo(-50),
-        'x': lambda: handle_servo(0),
-        'c': lambda: handle_servo(50),
-        '0': lambda: servo_controller.calibrate(),
+        'z': lambda: handle_servo("close"),
+        'x': lambda: handle_servo("open"),
+        '1': lambda: handle_servo(1),
+        '2': lambda: handle_servo(2),
+        '3': lambda: handle_servo(3),
         'b': lambda: handle_bias(0.05, 0),
         'v': lambda: handle_bias(-0.05, 0),
         'k': lambda: handle_bias(0, 0.05),
@@ -146,25 +156,20 @@ def command_line_control(motor_controller, servo_controller, led_controller):
     while True:
         key = getch().lower()
         
-        # Check if the key is in the key_handlers map
         if key in key_handlers:
-            if key in 'wsad':  # These keys control movement, so pass the key to update_movement
-                key_handlers[key](key)
-            else:  # Other keys (like space, servo control, etc.) don't need to call update_movement
-                key_handlers[key]()
-        
-        elif key == 'q':  # Quit key
-            pretty_print("Returning to main menu", Pretty.RED)
-            return
-        
-        else:  # Invalid input handling
-            pretty_print("Invalid input. Use W, A, S, D, M, N, Space, Z, X, C, 0, or Q.", Pretty.RED)
-
-        # Only print velocities when movement keys (wsad) are pressed
-        if key in 'wsad':
+            key_handlers[key](key) if key in 'wsad' else key_handlers[key]()
+            
+            # Print velocities after any key press
             print_velocities(state['current_mode'], state['current_direction'],
                             linear_velocities[state['linear_index']][0],
                             angular_velocities[state['angular_index']][1])
+        
+        elif key == 'q':
+            pretty_print("Returning to main menu", Pretty.RED)
+            return
+        
+        else:
+            pretty_print("Invalid input. Use W, A, S, D, M, N, Space, Z, X, 1, 2, 3, or Q.", Pretty.RED)
 
         if state['start_time']:
             print_timer(state['start_time'])
@@ -186,11 +191,12 @@ def display_menu():
 def main():
     try:
         motor_controller = MotorController()
-        servo_controller = ServoController()
+        #servo_controller = ServoController()
+        servo_controller = claw.ItemCInit()
         led_controller = LEDController()
 
         motor_controller.initialise_gpio()
-        servo_controller.initialise_gpio()
+        #servo_controller.initialise_gpio()
         led_controller.__init__()
         led_controller.party_time()
         led_controller.stop_party()
@@ -230,12 +236,12 @@ def main():
 
     finally:
         motor_controller.set_velocity(0, 0)
-        servo_controller.set_servo_speed("arm", 0)
+        #servo_controller.set_servo_speed("arm", 0)
         led_controller.turn_off_all()
 
         led_controller.cleanup()
         motor_controller.cleanup()
-        servo_controller.cleanup()
+        #servo_controller.cleanup()
 
 
 if __name__ == "__main__":
