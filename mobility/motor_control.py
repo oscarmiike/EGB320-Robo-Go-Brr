@@ -102,7 +102,7 @@ class MotorController:
 
         # Set motor speeds
         self.set_motor_speed(self.pwm_a, self.motor_gpio.AIN1_PIN,self.motor_gpio.AIN2_PIN, left_pwm)
-        self.set_motor_speed(self.pwm_b, self.motor_gpio.BIN1_PIN,self.motor_gpio.BIN2_PIN, right_pwm, reverse=True)
+        self.set_motor_speed(self.pwm_b, self.motor_gpio.BIN1_PIN,self.motor_gpio.BIN2_PIN, right_pwm, reverse=False)
 
 
     def get_pwm_for_velocity(self, velocity_map, target_velocity, is_linear):

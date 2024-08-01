@@ -3,8 +3,6 @@ import traceback
 import vision.Vision_Master_doc_revised as v
 import navigation.csv_Finder as nav
 from mobility.motor_control import MotorController # mobiltiy controller
-import item_collection.servo as servo  # servo controller
-import item_collection.servoControl as claw  # servo controller
 from helpers.led import LEDController # led controller
 from helpers.common import print_timer
 from config import LED # config file
