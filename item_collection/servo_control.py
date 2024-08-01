@@ -41,8 +41,8 @@ class ServoController:
         Set the position of the specified servo.
         """
         # Validate the servo name and position
-        if servo_name not in ["big_servo", "little_servo"]:
-            print("Invalid servo name. Use 'big_servo' or 'little_servo'.")
+        if servo_name not in ["bigservo", "littleservo"]:
+            print("Invalid servo name. Use 'bigservo' or 'littleservo'.")
             return
         
         if not (0 <= position <= 180):

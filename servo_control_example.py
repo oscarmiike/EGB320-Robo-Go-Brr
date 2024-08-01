@@ -82,13 +82,13 @@ class RoboGoBrr:
             elapsed_time = 0
             while elapsed_time < run_duration:
                 # Move both servos to 0 degrees
-                self.servo_controller.set_servo_position("servo1", 0)
-                #self.servo_controller.set_servo_position("servo2", 0)
+                self.servo_controller.set_servo_position("bigservo", 0)
+                self.servo_controller.set_servo_position("littleservo", 0)
                 time.sleep(1)  # Adjust the delay as needed for servo movement
 
                 # Move both servos to 180 degrees
-                self.servo_controller.set_servo_position("servo1", 180)
-                #self.servo_controller.set_servo_position("servo2", 180)
+                self.servo_controller.set_servo_position("bigservo", 180)
+                self.servo_controller.set_servo_position("littleservo", 180)
                 time.sleep(1)  # Adjust the delay as needed for servo movement
 
                 # Update the elapsed time
