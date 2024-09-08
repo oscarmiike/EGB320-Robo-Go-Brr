@@ -103,7 +103,7 @@ def main():
 | Yellow LED              |                 | GPIO20| Pin 38     |
 | Red LED                 |                 | GPIO16| Pin 36     |
 
-
+<!--test-->
 ## Terminal Control
 | Key   | Action                                   |     |
 |-------|------------------------------------------|-----|
