@@ -72,27 +72,27 @@ class RoboGoBrr:
             # Set the LED color to green
             self.led_controller.set_color(LED.GREEN)
             
-            linear_velocity = 0.08  # m/s
+            linear_velocity = 0.03  # m/s
             angular_velocity = 0.0  # rad/s
-
+            
             # Start the motors
             self.motor_controller.set_velocity(linear_velocity, angular_velocity)
-
+            time.sleep(3)
             # Keep moving the servos back and forth for the specified duration
-            elapsed_time = 0
-            while elapsed_time < run_duration:
-                # Move both servos to 0 degrees
-                self.servo_controller.set_servo_position("bigservo", 0)
-                self.servo_controller.set_servo_position("littleservo", 0)
-                time.sleep(1)  # Adjust the delay as needed for servo movement
+            # elapsed_time = 0
+            # while elapsed_time < run_duration:
+            #     # Move both servos to 0 degrees
+            #     self.servo_controller.set_servo_position("bigservo", 0)
+            #     self.servo_controller.set_servo_position("littleservo", 0)
+            #     time.sleep(1)  # Adjust the delay as needed for servo movement
 
-                # Move both servos to 180 degrees
-                self.servo_controller.set_servo_position("bigservo", 180)
-                self.servo_controller.set_servo_position("littleservo", 180)
-                time.sleep(1)  # Adjust the delay as needed for servo movement
+            #     # Move both servos to 180 degrees
+            #     self.servo_controller.set_servo_position("bigservo", 180)
+            #     self.servo_controller.set_servo_position("littleservo", 180)
+            #     time.sleep(1)  # Adjust the delay as needed for servo movement
 
-                # Update the elapsed time
-                elapsed_time = time.time() - start_time
+            #     # Update the elapsed time
+            #     elapsed_time = time.time() - start_time
 
             # Stop the motors after the duration has elapsed
             self.motor_controller.set_velocity(0, 0)
