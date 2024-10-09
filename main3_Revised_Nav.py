@@ -460,7 +460,7 @@ def main():
         elif object == 4:
             robot.go_claw_in(1.1)
         elif object == 5:
-            robot.go_claw_in(1.05)
+            robot.go_claw_in(1)
         else:
             print ("you forgot to write an input variable in claw_close()")
 
@@ -482,17 +482,12 @@ def main():
             print ("you forgot to write an input variable in claw_close()")
 
 
-    robotstate =39
-    row = 1
-    bay = 3
+    robotstate = 39
+    row = 3
+    bay = 0
     height=0
-    shelf=1   #1=left 0=right 
-    item=2 #0 = Cube, 1=wheetbots,2=soccer ball, 3 =bottle , 4=bowl, 5=cup 
-    out=0
-    spotted=0
-    stuck=0
-    stuck_counter=0
-    claw_open(item)
+    shelf=1
+    item=0
     
     
     try:
@@ -504,7 +499,6 @@ def main():
         init_height=0
         #robot.go_get_stuff()
         #robot.execute_command_array()
-        
         lift(1)
         while True:
 
@@ -520,7 +514,7 @@ def main():
             #frame = frame[65:-1,:]  #Crops the image
             hsv_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)  ## COnversion into HSV for the Hue channel
             cv2.rectangle(hsv_frame, (0, 0), (320, 240), (0,0,0), 2)    
-            gbear,gdist,ybear,ydist,y2dist,yrects,bbear,bdist,mbear,mdist,Aisle,wbear,wdist=v.Main_Outline(frame, hsv_frame)  #provides the distances and
+            gbear,gdist,ybear,ydist,y2dist,bbear,bdist,mbear,mdist,Aisle,wdist=v.Main_Outline(frame, hsv_frame)  #provides the distances and
             #Bearings in the form of arrays. The fist item in an array is the item that is the tallest, or heighest up. This typically 
             #coresponds with the furtherest item
             if len(ydist)>0 and len(y2dist) >0:  ##Checking the accuracies of the yellow distance measurements
@@ -531,8 +525,6 @@ def main():
             
             if robotstate >= 99 and robotstate <= 102:
                 robot.led_controller.set_color(LED.RED) 
-            elif robotstate >= 300:
-                robot.led_controller.set_color(LED.GREEN) 
             else:
                 robot.led_controller.set_color(LED.YELLOW)
 
@@ -551,36 +543,25 @@ def main():
                         robotstate = 100
                         print(ybear)
              
-             #lane  
-            if robotstate == 100 and row == 1:
-                robot.motor_controller.set_velocity(0.7, 0)
-                time.sleep(0.1)
-                robot.motor_controller.set_velocity(0,0) 
-                time.sleep(0.1)
-                if len(ydist) > 0 and abs(ydist[0]) <= 650:
-                    time.sleep(5.2)
-                    robot.motor_controller.set_velocity(0, 0)
-                    robotstate = 101
-
+             #lane        
             if robotstate == 100 and row == 2:
                 robot.motor_controller.set_velocity(0.7, 0)
-                time.sleep(0.1)
-                robot.motor_controller.set_velocity(0,0) 
-                time.sleep(0.1)
                 if len(ydist) > 0 and abs(ydist[0]) <= 320:
                     robot.motor_controller.set_velocity(0, 0)
                     robotstate = 101
                     
             if robotstate == 100 and row == 3:
                 robot.motor_controller.set_velocity(0.7, 0)
-                time.sleep(0.1)
-                robot.motor_controller.set_velocity(0,0) 
-                time.sleep(0.1)
-                if len(ydist) > 0 and abs(ydist[0]) <= 720:
+                if len(ydist) > 0 and abs(ydist[0]) <= 870:
                     robot.motor_controller.set_velocity(0, 0)
                     robotstate = 101
                     
-            
+            if robotstate == 100 and row == 1:
+                robot.motor_controller.set_velocity(0.7, 0)
+                if len(ydist) > 0 and abs(ydist[0]) <= 650:
+                    time.sleep(5.2)
+                    robot.motor_controller.set_velocity(0, 0)
+                    robotstate = 101
                     
             #if robotstate == 100 and row == 1:
                 #robot.motor_controller.set_velocity(0.7, 0)
@@ -594,19 +575,8 @@ def main():
                 robot.motor_controller.set_velocity(0, -0.1)
                 time.sleep(0.1)
                 robot.motor_controller.set_velocity(0, 0)
-                time.sleep(0.1)
                 print(f"{mbear}")
                 if len(mbear) > 0 and (mbear[0] <= -4) and (Aisle == 2.0 or Aisle == 1.5):
-                    robot.motor_controller.set_velocity(0, 0)
-                    robotstate = 102  
-            
-            elif robotstate == 101 and (row == 1):
-                robot.motor_controller.set_velocity(0, -0.1)
-                time.sleep(0.1)
-                robot.motor_controller.set_velocity(0, 0)
-                time.sleep(0.1)
-                print(f"{mbear}")
-                if len(mbear) > 0 and (mbear[0] <= -2) and (Aisle == 1.0 or Aisle == 0.5):
                     robot.motor_controller.set_velocity(0, 0)
                     robotstate = 102  
 
@@ -615,342 +585,137 @@ def main():
                 robot.motor_controller.set_velocity(0, -0.1)
                 time.sleep(0.1)
                 robot.motor_controller.set_velocity(0, 0)
-                time.sleep(0.1)
-                if len(mbear) > 0 and mbear[0] <= 1 and Aisle >= 2.5:
+                if len(mbear) > 0 and mbear[0] <= -5 and Aisle >= 2.5:
                     robot.motor_controller.set_velocity(0, 0)
                     robotstate = 102 
                     #if row == 1:
                         #robotstate = 110
-            
+            elif robotstate == 101 and (row == 1):
+                robot.motor_controller.set_velocity(0, -0.1)
+                time.sleep(0.1)
+                robot.motor_controller.set_velocity(0, 0)
+                print(f"{mbear}")
+                if len(mbear) > 0 and (mbear[0] <= -2) and (Aisle == 1.0 or Aisle == 0.5):
+                    robot.motor_controller.set_velocity(0, 0)
+                    robotstate = 102  
 
-       
+
+                        
+            
+                        
+            #row 1
+            if robotstate == 110:
+               robot.motor_controller.set_velocity(0.3, 0)
+               if len(mdist) > 0 and abs(mdist[0]) <= 1500:
+                    robot.motor_controller.set_velocity(0, 0) 
+                    robotstate = 111            
+            
+            
+            if robotstate == 111:
+                robot.motor_controller.set_velocity(0, 0.1)
+                if len(ybear) > 0 and len (bbear) > 0 and ybear[0] >= -43 and bbear[0] != None :
+                    robot.motor_controller.set_velocity(0, 0)
+                    robotstate = 112
+                    
+            if robotstate == 112:
+               robot.motor_controller.set_velocity(0.3, 0)
+               if len(ydist) > 0 and abs(ydist[0]) <= 400:
+                    robot.motor_controller.set_velocity(0, 0) 
+                    #robotstate = 111 
+                                 
                     
             if robotstate == 102 and bay == 0:
-                if abs(mbear[0])<4:
-                    robot.motor_controller.set_velocity(0.3, 0)
-                    time.sleep(0.1)
-                    robot.motor_controller.set_velocity(0,0) 
-                    time.sleep(0.1)
-                    if len(mdist) > 0 and abs(mdist[0]) <= 980:
-                        robot.motor_controller.set_velocity(0, 0) 
-                        robotstate = 103    
-                else:
-                    if mbear[0]>0.15: #If the b earing is too far to the right then it should turn to the right
-                        robot.motor_controller.set_velocity(0, -0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
-                    else: 
-                        ## and if it's too far left it should turn left
-                        robot.motor_controller.set_velocity(0, 0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
+               robot.motor_controller.set_velocity(0.3, 0)
+               if len(mdist) > 0 and abs(mdist[0]) <= 990:
+                    robot.motor_controller.set_velocity(0, 0) 
+                    robotstate = 103    
 
             elif robotstate == 102 and bay == 1:
-                if len(mbear)>0 and abs(mbear[0])/len(mbear)<4:
-                    robot.motor_controller.set_velocity(0.3, 0)
-                    time.sleep(0.1)
-                    robot.motor_controller.set_velocity(0,0) 
-                    time.sleep(0.1)
-                    if len(mdist) > 0 and abs(mdist[0]) <= 650:
-                        robot.motor_controller.set_velocity(0, 0) 
-                        robotstate = 103 
-                else:
-                    if mbear[0]>0: #If the b earing is too far to the right then it should turn to the right
-                        robot.motor_controller.set_velocity(0, -0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
-                    else: 
-                        ## and if it's too far left it should turn left
-                        robot.motor_controller.set_velocity(0, 0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
+               robot.motor_controller.set_velocity(0.3, 0)
+               if len(mdist) > 0 and abs(mdist[0]) <= 650:
+                    robot.motor_controller.set_velocity(0, 0) 
+                    robotstate = 103 
                     
             elif robotstate == 102 and bay == 2:
-                if len(mbear)>0 and abs(mbear[0])<4:
-                    robot.motor_controller.set_velocity(0.3, 0)
-                    time.sleep(0.1)
-                    robot.motor_controller.set_velocity(0,0) 
-                    time.sleep(0.1)
-                    if len(mdist) > 0 and abs(mdist[0]) <= 645: #previously 650
-                        # time.sleep(2.25)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0) 
-                        robotstate = 103 
-                else:
-                    if len(mbear)>0 and mbear[0]>0: #If the b earing is too far to the right then it should turn to the right
-                        robot.motor_controller.set_velocity(0, -0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
-                    else: 
-                        ## and if it's too far left it should turn left
-                        robot.motor_controller.set_velocity(0, 0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
+                robot.motor_controller.set_velocity(0.3, 0)
+                if len(mdist) > 0 and abs(mdist[0]) <= 650:
+                    time.sleep(2.5)
+                    robot.motor_controller.set_velocity(0, 0) 
+                    robotstate = 103 
                     
             elif robotstate == 102 and bay == 3:
-                if len(mbear)> 0 and abs(mbear[0])<4:
-                    robot.motor_controller.set_velocity(0.3, 0)
-                    time.sleep(0.1)
-                    robot.motor_controller.set_velocity(0,0) 
-                    time.sleep(0.1)
-                    if len(mdist) > 0 and abs(mdist[0]) <= 645:
-                        robot.motor_controller.set_velocity(0.3, 0)
-                        time.sleep(1.4) #prev 0.9
-                        robot.motor_controller.set_velocity(0, 0) 
-                        robotstate = 103 
-                else:
-                    if len(mbear)>0 and mbear[0]>0: #If the b earing is too far to the right then it should turn to the right
-                        robot.motor_controller.set_velocity(0, -0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
-                    else: 
-                        ## and if it's too far left it should turn left
-                        robot.motor_controller.set_velocity(0, 0.1)
-                        time.sleep(0.15)
-                        robot.motor_controller.set_velocity(0, 0)
+               robot.motor_controller.set_velocity(0.3, 0)
+               if len(mdist) > 0 and abs(mdist[0]) <= 650:
+                    time.sleep(4.8)
+                    robot.motor_controller.set_velocity(0, 0) 
+                    robotstate = 103 
 
             if robotstate==103:
                 if (shelf%2)==0:
-                    robot.motor_controller.set_velocity(0, -1)
-                    time.sleep(2)
-                else:
                     robot.motor_controller.set_velocity(0, 1)
-                    time.sleep(2) # prev 1.3
-                robotstate=39
-                robot.motor_controller.set_velocity(0, 0)
-                
-            ###################################exit aisle#############################################
-            
-            #align shelves
-            if robotstate == 104: 
-                robot.motor_controller.set_velocity(0, 0.2)
-                time.sleep(0.9)
-                robot.motor_controller.set_velocity(0, 0)
-                robotstate = 105
-                
-            if robotstate == 105:
-                if len(bbear) > 0 and abs(bbear[0]) <= 20: 
-                    robot.motor_controller.set_velocity(0, 0.1)
-                    time.sleep(0.15)
-                    robot.motor_controller.set_velocity(0, 0)
-                    if len(bbear) > 0 and abs(bbear[0]) >= 20: 
-                        robot.motor_controller.set_velocity(0, 0)                   
-                        robotstate = 106
-                
+                    time.sleep(2.9)
                 else:
-                    robotstate = 106
-                    
-            # if robotstate == 106:
-            #     robot.motor_controller.set_velocity(0.1, 0)
-                
-            #     if len(bbear) > 0 and bbear[0] <= 20:
-            #         robot.motor_controller.set_velocity(0.1, 2)
-            #         print('realign L')
-                    
-            #     elif len(bbear) > 0 and bbear[0] >= 20:
-            #         robot.motor_controller.set_velocity(0.1, -2)
-            #         print('realign R')
-                    
-            #     elif len(bdist) > 0 and bdist[0] <=0:
-            #        robot.motor_controller.set_velocity(0, 0)
-            #        robotstate = 107 
-                   
-            
-                    
-                
-                
-                # if len(bbear) > 0 and abs(bbear[0]) >=20:
-                #     robot.motor_controller.set_velocity(0, 0)                    
-                #     robotstate = 105
-
-
-            ##### THIS IS CHARLOTTE's TRY AT MAKING THE ROBOT EXIT THE AISLE AFTER COLLECTING THE ITEM #################    
-                    
-            if robotstate ==300:  
-                ### This is the same realligning code seen previously that will hopefully put us within view of the white
-                ### wall at the exit of the aisle. THis will turn depending upon what aisle it was meant to go towards
-                
-                if (shelf%2)==0: #works for shelves 0,2,4 On the right???
-                    robot.motor_controller.set_velocity(0, -1) 
-                    time.sleep(1.3)
-                else: #For shelves 1,3,5 On the left
-                    robot.motor_controller.set_velocity(0, 1) 
-                    time.sleep(1.3)
-                robotstate=301
-                
-            if robotstate ==301:
-                #Code that forces it to exit the Aisle by centering on the white bearing
-                if len(wbear)>0: # If it can see the white bearing
-                    if abs(wbear[0]) >3: #If the angle to it is too great then it should recentre on the middle of the bearing
-                        if wbear[0]>0: #If the b earing is too far to the right then it should turn to the right
-                            robot.motor_controller.set_velocity(0, -0.1)
-                            time.sleep(0.15)
-                            robot.motor_controller.set_velocity(0, 0)
-                        else: ## and if it's too far left it should turn left
-                            robot.motor_controller.set_velocity(0, 0.1)
-                            time.sleep(0.15)
-                            robot.motor_controller.set_velocity(0, 0)
-                    else: ## If it's within the angle then it will move forward. until it gets out of the Aisle
-                        if len(bdist)>0:
-                            robot.motor_controller.set_velocity(0.5,0)
-                            time.sleep(0.3)
-                            robot.motor_controller.set_velocity(0,0)
-                        else:
-                            robot.motor_controller.set_velocity(0,0)
-                            out=out+1
-                            if out==20:
-                                robot.motor_controller.set_velocity(0.5,0)
-                                time.sleep(0.5)
-                                robot.motor_controller.set_velocity(0,0)
-                                print("Out Of Aisle")
-                                robotstate=302
-                                out=0
-                else:
-                    if (shelf%2)==0:
-                        robot.motor_controller.set_velocity(0, -1)
-                        time.sleep(0.1)
-                    else:
-                        robot.motor_controller.set_velocity(0, 1)
-                        time.sleep(0.1)
-                    robot.motor_controller.set_velocity(0, 0)
-
-
-
-            if robotstate == 302:
-                ## This code will make the robot turn to centre on the yellow return bay before centering on the marker. 
-                if len(ybear)>0:
-                    # This will only proc if it can See the yellow bearing. 
-                    if abs(ybear[0])>3:
-                        for rect in yrects:
-                            if rect[1]+rect[3]>225:
-                                print("Hit the Drop off point 3! :)")
-                                robotstate=303
-
-                        #If it's on far too great of an angle then it will instead focus on the reallignment
-                        if ybear[0]>0: #If the b earing is too far to the right then it should turn to the right
-                            robot.motor_controller.set_velocity(0, -0.1)
-                            time.sleep(0.15)
-                            robot.motor_controller.set_velocity(0, 0)
-                        else: ## and if it's too far left it should turn left
-                            robot.motor_controller.set_velocity(0, 0.1)
-                            time.sleep(0.15)
-                            robot.motor_controller.set_velocity(0, 0)
-                        if abs(stuck)>abs(ybear[0]):
-                            stuck_counter=stuck_counter+1
-                            if stuck_counter==20:
-                                print("Hit the Drop off point!1 :)")
-                                robotstate=303
-                        stuck=abs(ybear[0])
-                    else:
-                        if (ydist[0]>400):
-                            robot.motor_controller.set_velocity(1,0)
-                        else:
-                            print("Hit the Drop off point2! :)")
-                            robotstate=303
-                            robot.motor_controller.set_velocity(1,0)
-                            time.sleep(1.01)
-                        
-                
-                else:    
-                    ## THis only happens when there is no y bear
-                    robot.motor_controller.set_velocity(0,-1)
-
-            if robotstate==303:
-                robot.motor_controller.set_velocity(1,0)
-                time.sleep(0.2)
-                claw_open(item)
-                robot.motor_controller.set_velocity(0,0)
-                robotstate=666
-
-
-
-                        
-
-                
-
-
-
-
-                
-                
-                
+                    robot.motor_controller.set_velocity(0, -1)
+                    time.sleep(2.9)
+                robotstate=3
+                robot.motor_controller.set_velocity(0, 0)
              
             
 
             ############################################## THIS IS THE ITEM COLLECTION CODE ##############################################
             if robotstate ==39:
-			   
-                robot.motor_controller.set_velocity(-0.1, 0)
-                time.sleep(0.2)
-                robot.motor_controller.set_velocity(0, 0)
                 if height==0:
-                    lift(1)
+                    robot.lift(1)
                     robotstate=49  
                 if height ==1:
-                    lift(2)
+                    robot.lift(2)
                     robotstate=49  
                 if height ==2:
-                    lift(3)
+                    robot.lift(3)
                     robotstate=49      
             
              
             if robotstate ==49:
-                #claw_open(item)
                 #HIYA CHARLOTTE HERE
                 #This is theoertically for if the claw is up but the item or robot is off to the side and it needs to angle itself to reach. 
-                item_bearing,frame,Object_height,rectangles=v.Red_bearing(hsv_frame, frame) #This gets the bearing of the item if it can see it
-                if len(rectangles)>1:
-                    robot.motor_controller.set_velocity(0.1, 0)
-                    time.sleep(0.05)
-                    robot.motor_controller.set_velocity(0, 0)
-                else:
-                    looking_average=(item_bearing+looking_average)/2
-                    if item_bearing>=3 and locked_on==False: # if it's to the right
-                        robot.motor_controller.set_velocity(0,-0.001) #Turn left
-                        print("Rotating")
-                    elif item_bearing<=-3 and locked_on==False:
-                        robot.motor_controller.set_velocity(0,0.001) #turn right
-                    elif abs(item_bearing-looking_average)<=0.5:
-                        print("alligned")
-                        robotstate=59
-                    time.sleep(0.05)
-                    robot.motor_controller.set_velocity(0,0) #Stop Moving
-                    time.sleep(0.1)
+                item_bearing,frame,Object_height=v.Red_bearing(hsv_frame, frame) #This gets the bearing of the item if it can see it
+                looking_average=(item_bearing+looking_average)/2
+                if item_bearing>=3 and locked_on==False: # if it's to the right
+                    robot.motor_controller.set_velocity(0,-0.001) #Turn left
+                    print("Rotating")
+                elif item_bearing<=-3 and locked_on==False:
+                    robot.motor_controller.set_velocity(0,0.001) #turn right
+                elif abs(item_bearing-looking_average)<=0.5:
+                    print("alligned")
+                    robotstate=59
+                    init_height=Object_height
+                time.sleep(0.1)
+                robot.motor_controller.set_velocity(0,0) #Stop Moving
+                time.sleep(0.1)
 
             if robotstate ==59:
                 ##AT This point the system has locked on to the item and centred it. Now it needs to approach slowly in order to find
                 #The right point to grab a hold of it. 
-                item_bearing,frame,Object_height,rectangles=v.Red_bearing(hsv_frame, frame) #This gets the bearing of the item if it can see it
-                if len(rectangles)>0:
-                    print("The Object is at......... "+str(rectangles[0][1]+rectangles[0][3]))
-                    print("retrival stage")
-                    if (rectangles[0][1]+rectangles[0][3])<239: # prev 235
-                        robot.motor_controller.set_velocity(0.1,0) #go straight
-                        time.sleep(0.1)
-                    else:
-                        robot.motor_controller.set_velocity(0.1,0) #go straight
-                        time.sleep(0.4) # prev 0.2
-                        robot.motor_controller.set_velocity(0,0) #stop
-                        claw_close(item)
-                        time.sleep(2)
-                        robotstate=69
-                    robot.motor_controller.set_velocity(0,0) #Stop Moving
+                item_bearing,frame,Object_height=v.Red_bearing(hsv_frame, frame) #This gets the bearing of the item if it can see it
+                print("retrival stage")
+                if Object_height>=init_height*0.5:
+                    print(str(Object_height)+":"+str(init_height*0.3))
+
+                    robot.motor_controller.set_velocity(0.1,0) #go straight
                     time.sleep(0.1)
+                else:
+                    robot.go_claw_in(2)
+                    robotstate=69
+                robot.motor_controller.set_velocity(0,0) #Stop Moving
+                time.sleep(0.1)
 
             if robotstate==69:
                 robot.motor_controller.set_velocity(-0.1,0) #move backwards
-                time.sleep(1.2)
+                time.sleep(0.5)
                 robot.motor_controller.set_velocity(0,0) #Stop Moving
-                ##claw_open(item)
-                lift(1)
-                robotstate=300
+                robot.go_claw_out(2)
+                robotstate=9\
                 
-
-
-
-
-
-
             if robotstate == 0:
                 robot.motor_controller.set_velocity(0.5,0)  
                 time.sleep(3)

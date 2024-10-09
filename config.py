@@ -17,11 +17,14 @@ class LED:
 █▀▄▀█ █▀▀█ █▀▀▄ ▀█▀ █   ▀█▀ ▀█▀ █  █ 
 █ ▀ █ █  █ █▀▀▄  █  █    █   █  █▄▄█ 
 ▀   ▀ ▀▀▀▀ ▀▀▀  ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▄▄▄█ 
+
+min 0.064m/s
+max 0.189m/s
 """
 class MotorParams:
     # terminal_app input vars
-    _MAX_LINEAR_VELOCITY = 0.05
-    _MAX_ANGULAR_VELOCITY = 0.05
+    _MAX_LINEAR_VELOCITY = 0.5
+    _MAX_ANGULAR_VELOCITY = 0.5
     _LINEAR_VELOCITY_STEP = 0.01
     _ANGULAR_VELOCITY_STEP = 0.1
     
@@ -30,10 +33,12 @@ class MotorParams:
     # swtiched to the map below
     WHEEL_BASE = 0.084
     WHEEL_RADIUS = 0.0175
-    MAX_SPEED = 0.2
+    MAX_SPEED = 0.5
     MIN_SPEED = 0.01
     MAX_ANGULAR_SPEED = 2 * MAX_SPEED / WHEEL_BASE
     ANGLE_SCALING_FACTOR = 1.23 / 4.66
+    INITIAL_LINEAR_VELOCITY = 0.2  # Set this to your desired initial linear velocity
+    INITIAL_ANGULAR_VELOCITY = 8.0
     
     # Bias for the motors
     LEFT_WHEEL_BIAS_FORWARD = 0
@@ -53,7 +58,7 @@ class MotorParams:
     """
     LINEAR_VELOCITY_MAP = {
         # format: (linear_velocity, angular_velocity) > (PWM_LEFT, PWM_RIGHT)
-        (0.1855, 0.0): (100, 100),  
+        (0.4, 0.0): (100, 100),  
         (0.1032, 0.0): (95, 95),  
         (0.1013, 0.0): (90, 90),
         (0.0929, 0.0): (85, 85),
@@ -80,7 +85,7 @@ class MotorParams:
     
     ANGULAR_VELOCITY_MAP = {
         # format: (linear_velocity, angular_velocity) > (PWM_LEFT, PWM_RIGHT)
-        (0.0, 2.066): (100, -100),
+        (0.0, 5.066): (100, -100),
         (0.0, 1.153): (90, -90),
         (0.0, 0.935): (80, -80),
         (0.0, 0.884): (70, -70),

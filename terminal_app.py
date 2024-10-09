@@ -1,3 +1,4 @@
+
 from mobility.motor_control import MotorController
 from item_collection.servo_control import ServoController
 from helpers.led import LEDController
@@ -31,155 +32,106 @@ def execute_command_array(motor_controller, command_array):
 
 
 def command_line_control(motor_controller, servo_controller, led_controller):
-    """ChatGpt refactor - my function was getting a bit monolithic"""
-    
     pretty_print("Control the robot using the following keys:", Pretty.HEADER)
-    
-    control_instructions = [
-        ("W/S", "Forward/Backward"),
-        ("A/D", "Left/Right turn"),
-        ("M/N", "Increase/Decrease current velocity"),
-        ("Space", "Stop all motors"),
-        ("Z/C", "Rotate servo backward/forward"),
-        ("X", "Stop servo"),
-        ("0", "Calibrate servo"),
-        ("Q", "Return to main menu")
-    ]
-    for key, action in control_instructions:
-        pretty_print(f"{key}: {action}", Pretty.LIGHT_GRAY)
+    pretty_print("W/S: Forward/Backward", Pretty.LIGHT_GRAY)
+    pretty_print("A/D: Left/Right turn", Pretty.LIGHT_GRAY)
+    pretty_print("M/N: Increase/Decrease current velocity", Pretty.LIGHT_GRAY)
+    pretty_print("Space: Stop all motors", Pretty.LIGHT_GRAY)
+    pretty_print("Z/C: Rotate servo backward/forward", Pretty.LIGHT_GRAY)
+    pretty_print("X: Stop servo", Pretty.LIGHT_GRAY)
+    pretty_print("0: Calibrate servo", Pretty.LIGHT_GRAY)
+    pretty_print("Q: Return to main menu", Pretty.LIGHT_GRAY)
 
-    linear_velocities = sorted(MotorParams.LINEAR_VELOCITY_MAP.keys(), key=lambda x: x[0], reverse=True)
-    angular_velocities = sorted(MotorParams.ANGULAR_VELOCITY_MAP.keys(), key=lambda x: x[1], reverse=True)
+    # Use initial velocities from MotorParams
+    max_linear_velocity = MotorParams.MAX_SPEED
+    max_angular_velocity = MotorParams.MAX_ANGULAR_SPEED
+    linear_velocity = MotorParams.INITIAL_LINEAR_VELOCITY
+    angular_velocity = MotorParams.INITIAL_ANGULAR_VELOCITY
+    current_mode = 'linear'
+    linear_velocity_step = 0.01
+    angular_velocity_step = 0.1
+    current_direction = 0  
+    start_time = None  
 
-    state = {
-        'linear_index': 4,
-        'angular_index': 4,
-        'current_mode': 'linear',
-        'current_direction': 0,
-        'start_time': None
-    }
-
-    def update_movement(key):
-        if key in 'ws':
-            velocity = linear_velocities[state['linear_index']][0]
-            if key == 's':
-                velocity = -velocity
-            motor_controller.set_velocity(velocity, 0)
-            led_controller.set_color(LED.GREEN if key == 'w' else LED.YELLOW)
-        elif key in 'ad':
-            velocity = angular_velocities[state['angular_index']][1]
-            if key == 'd':
-                velocity = -velocity
-            motor_controller.set_velocity(0, velocity)
+    def update_movement():
+        if current_mode == 'linear':
+            motor_controller.set_velocity(
+                linear_velocity * current_direction, 0)
+            led_controller.set_color(LED.GREEN)
+        else:
+            motor_controller.set_velocity(
+                0, angular_velocity * current_direction)
             led_controller.set_color(LED.RED)
 
-    def handle_movement_key(key):
-        state['current_mode'] = 'linear' if key in 'ws' else 'angular'
-        state['current_direction'] = 1 if key in 'wa' else -1
-        if state['start_time'] is None:
-            state['start_time'] = time.time()
-        movement = {'w': 'forward', 's': 'backward', 'a': 'left', 'd': 'right'}[key]
-        pretty_print(f"Moving {movement}", Pretty.GREEN)
-        update_movement(key)
-
-    def handle_velocity_change(increase):
-        index_key = 'linear_index' if state['current_mode'] == 'linear' else 'angular_index'
-        velocities = linear_velocities if state['current_mode'] == 'linear' else angular_velocities
-        if increase:
-            state[index_key] = max(0, state[index_key] - 1)
-            pretty_print("Increasing velocity", Pretty.YELLOW)
-        else:
-            state[index_key] = min(len(velocities) - 1, state[index_key] + 1)
-            pretty_print("Decreasing velocity", Pretty.YELLOW)
-        
-        # Apply the new velocity immediately after the change, accounting for the direction
-        current_velocity = velocities[state[index_key]]
-        if state['current_mode'] == 'linear':
-            motor_controller.set_velocity(current_velocity[0] * state['current_direction'], 0)
-        else:
-            motor_controller.set_velocity(0, current_velocity[1] * state['current_direction'])
-
-
-    def handle_stop():
-        state['current_direction'] = 0
-        motor_controller.set_velocity(0, 0)
-        servo_controller.set_servo_speed("arm", 0)
-        led_controller.turn_off_all()
-        pretty_print("Stopping all motors", Pretty.RED)
-        if state['start_time']:
-            print_timer(state['start_time'])
-            state['start_time'] = None
-
-    def handle_servo(speed):
-        servo_controller.set_servo_speed("arm", speed)
-        action = "forward" if speed > 0 else "backward" if speed < 0 else "stop"
-        pretty_print(f"Rotating servo {action}", Pretty.BLUE if speed != 0 else Pretty.RED)
-
-    def handle_bias(left, right):
-        motor_controller.tweak_bias(left, right, state['current_direction'])
-        wheel = "left" if left != 0 else "right"
-        action = "Increasing" if (left > 0 or right > 0) else "Decreasing"
-        pretty_print(f"{action} {wheel} wheel bias", Pretty.LIGHT_GRAY)
-
-    key_handlers = {
-        'w': handle_movement_key,
-        's': handle_movement_key,
-        'a': handle_movement_key,
-        'd': handle_movement_key,
-        ' ': handle_stop,
-        'm': lambda: handle_velocity_change(True),
-        'n': lambda: handle_velocity_change(False),
-        'z': lambda: handle_servo(-50),
-        'x': lambda: handle_servo(0),
-        'c': lambda: handle_servo(50),
-        '0': lambda: servo_controller.calibrate(),
-        'b': lambda: handle_bias(0.05, 0),
-        'v': lambda: handle_bias(-0.05, 0),
-        'k': lambda: handle_bias(0, 0.05),
-        'l': lambda: handle_bias(0, -0.05),
-    }
-
-    print_velocities(state['current_mode'], state['current_direction'],
-                     linear_velocities[state['linear_index']][0],
-                     angular_velocities[state['angular_index']][1])
+    print_velocities(current_mode, current_direction,
+                     linear_velocity, angular_velocity)
 
     while True:
         key = getch().lower()
-        
-        # Check if the key is in the key_handlers map
-        if key in key_handlers:
-            if key in 'wsad':  # These keys control movement, so pass the key to update_movement
-                key_handlers[key](key)
-            else:  # Other keys (like space, servo control, etc.) don't need to call update_movement
-                key_handlers[key]()
-        
-        elif key == 'q':  # Quit key
+
+        if key in ['w', 's', 'a', 'd']:
+            if start_time is None:
+                start_time = time.time()  
+            current_mode = 'linear' if key in ['w', 's'] else 'angular'
+            current_direction = 1 if key in ['w', 'a'] else -1
+            pretty_print(
+                f"Moving {'forward' if key == 'w' else 'backward' if key == 's' else 'left' if key == 'a' else 'right'}", Pretty.GREEN)
+
+        elif key == ' ':
+            current_direction = 0
+            motor_controller.set_velocity(0, 0)
+            pretty_print("Stopping all motors", Pretty.RED)
+            if start_time:
+                print_timer(start_time)  
+                start_time = None
+
+        elif key == 'm':
+            if current_mode == 'linear':
+                linear_velocity = min(
+                    linear_velocity + linear_velocity_step, max_linear_velocity)
+            else:
+                angular_velocity = min(
+                    angular_velocity + angular_velocity_step, max_angular_velocity)
+            pretty_print("Increasing velocity", Pretty.YELLOW)
+
+        elif key == 'n':
+            if current_mode == 'linear':
+                linear_velocity = max(
+                    linear_velocity - linear_velocity_step, 0)
+            else:
+                angular_velocity = max(
+                    angular_velocity - angular_velocity_step, 0)
+            pretty_print("Decreasing velocity", Pretty.YELLOW)
+
+        elif key == 'q':
             pretty_print("Returning to main menu", Pretty.RED)
             return
-        
-        else:  # Invalid input handling
-            pretty_print("Invalid input. Use W, A, S, D, M, N, Space, Z, X, C, 0, or Q.", Pretty.RED)
 
-        # Only print velocities when movement keys (wsad) are pressed
-        if key in 'wsad':
-            print_velocities(state['current_mode'], state['current_direction'],
-                            linear_velocities[state['linear_index']][0],
-                            angular_velocities[state['angular_index']][1])
+        else:
+            pretty_print(
+                "Invalid input. Use W, A, S, D, M, N, Space, Z, X, C, 0, or Q.", Pretty.RED)
 
-        if state['start_time']:
-            print_timer(state['start_time'])
+        update_movement()
+
+        print_velocities(current_mode, current_direction,
+                         linear_velocity, angular_velocity)
+
+        if start_time:
+            print_timer(start_time)
+
 
 
 def display_menu():
     pretty_print("\nRobot Control Menu:", Pretty.HEADER)
     pretty_print("1. Execute command array", Pretty.BLUE)
     pretty_print("2. Manual command-line control", Pretty.BLUE)
-    pretty_print("3. Calibrate servo (untested since refactor)", Pretty.BLUE)
+    pretty_print("3. Calibrate servo", Pretty.BLUE)
     pretty_print("Q. Quit", Pretty.BLUE)
-    pretty_print(f"{Pretty.GREEN}Enter your choice (1-4, Q to quit): ", Pretty.ENDC)
+    pretty_print(
+        f"{Pretty.GREEN}Enter your choice (1-4, Q to quit): ", Pretty.ENDC)
 
-    choice = getch().lower()
-    print()
+    choice = getch().lower() 
+    print()  
     return choice
 
 
@@ -188,19 +140,19 @@ def main():
         motor_controller = MotorController()
         servo_controller = ServoController()
         led_controller = LEDController()
+        servo_controller.initialise_serial()
 
         motor_controller.initialise_gpio()
-        servo_controller.initialise_gpio()
         led_controller.__init__()
-        led_controller.party_time()
-        led_controller.stop_party()
+
+        servo_controller.set_servo_position("bigservo", 95)
 
         command_array = [
-            (0.2, 0, 2),
-            (0, 4.0, 1),
-            (0.2, 0, 2),
-            (0, -4.0, 1),
-            (0.2, 0, 2)
+            (0.2, 0, 2),   
+            (0, 4.0, 1),   
+            (0.2, 0, 2),   
+            (0, -4.0, 1),  
+            (0.2, 0, 2)    
         ]
 
         while True:
@@ -230,8 +182,8 @@ def main():
 
     finally:
         motor_controller.set_velocity(0, 0)
-        servo_controller.set_servo_speed("arm", 0)
         led_controller.turn_off_all()
+        #servo_controller.set_servo_position("bigservo", 115)
 
         led_controller.cleanup()
         motor_controller.cleanup()
@@ -240,3 +192,212 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# from mobility.motor_control import MotorController
+# from item_collection.servo_control import ServoController
+# import item_collection.servoControl as claw
+# from helpers.led import LEDController
+# from helpers.common import getch, pretty_print, execute_command_array, print_velocities, print_timer
+# from config import Pretty, MotorParams, LED
+# import time
+
+
+# """
+# ▀█▀ █▀▀ █▀▀█ █▀▄▀█ ▀█▀ █▀▀▄ █▀▀█ █       █▀▀ ▀█▀ █▀▀█ █   
+#  █  █▀▀ █▄▄▀ █ ▀ █  █  █  █ █▄▄█ █       █    █  █▄▄▀ █   
+#  ▀  ▀▀▀ ▀ ▀▀ ▀   ▀ ▀▀▀ ▀  ▀ ▀  ▀ ▀▀▀     ▀▀▀  ▀  ▀ ▀▀ ▀▀▀ 
+
+# Terminal application to control the robot using the keyboard.
+# """
+
+
+# def execute_command_array(motor_controller, command_array):
+#     """
+#     Execute a series of commands in the form of (x_velocity, y_angle, duration) tuples.
+#     Was using to simulate a bunch of commands coming from nav system.
+#     """
+#     for command in command_array:
+#         x_velocity, y_angle, duration = command
+
+#         motor_controller.set_velocity(x_velocity, y_angle)
+
+#         time.sleep(duration)
+
+#     motor_controller.set_velocity(0, 0)
+
+
+# def command_line_control(motor_controller, led_controller):
+#     pretty_print("Control the robot using the following keys:", Pretty.HEADER)
+#     pretty_print("W/S: Forward/Backward", Pretty.LIGHT_GRAY)
+#     pretty_print("A/D: Left/Right turn", Pretty.LIGHT_GRAY)
+#     pretty_print("M/N: Increase/Decrease current velocity", Pretty.LIGHT_GRAY)
+#     pretty_print("Space: Stop all motors", Pretty.LIGHT_GRAY)
+#     pretty_print("Z/C: Rotate servo backward/forward", Pretty.LIGHT_GRAY)
+#     pretty_print("X: Stop servo", Pretty.LIGHT_GRAY)
+#     pretty_print("0: Calibrate servo", Pretty.LIGHT_GRAY)
+#     pretty_print("Q: Return to main menu", Pretty.LIGHT_GRAY)
+
+#     max_linear_velocity = MotorParams.MAX_SPEED
+#     max_angular_velocity = MotorParams.MAX_ANGULAR_SPEED
+#     linear_velocity = MotorParams.MAX_SPEED
+#     angular_velocity = max_angular_velocity
+#     current_mode = 'linear'
+#     linear_velocity_step = 0.01
+#     angular_velocity_step = 0.1
+#     current_direction = 0  
+#     start_time = None  
+
+#     def update_movement():
+#         if current_mode == 'linear':
+#             motor_controller.set_velocity(
+#                 linear_velocity * current_direction, 0)
+#             led_controller.set_color(LED.GREEN)
+#         else:
+#             motor_controller.set_velocity(
+#                 0, angular_velocity * current_direction)
+#             led_controller.set_color(LED.RED)
+
+#     print_velocities(current_mode, current_direction,
+#                      linear_velocity, angular_velocity)
+
+#     while True:
+#         key = getch().lower()
+
+#         if key in ['w', 's', 'a', 'd']:
+#             if start_time is None:
+#                 start_time = time.time()  
+#             current_mode = 'linear' if key in ['w', 's'] else 'angular'
+#             current_direction = 1 if key in ['w', 'a'] else -1
+#             pretty_print(
+#                 f"Moving {'forward' if key == 'w' else 'backward' if key == 's' else 'left' if key == 'a' else 'right'}", Pretty.GREEN)
+
+#         elif key == ' ':
+#             current_direction = 0
+#             motor_controller.set_velocity(0, 0)
+#             #servo_controller.set_servo_speed("arm", 0)
+#             pretty_print("Stopping all motors", Pretty.RED)
+#             if start_time:
+#                 print_timer(start_time)  
+#                 start_time = None
+
+#         elif key == 'm':
+#             if current_mode == 'linear':
+#                 linear_velocity = min(
+#                     linear_velocity + linear_velocity_step, max_linear_velocity)
+#             else:
+#                 angular_velocity = min(
+#                     angular_velocity + angular_velocity_step, max_angular_velocity)
+#             pretty_print("Increasing velocity", Pretty.YELLOW)
+
+#         elif key == 'n':
+#             if current_mode == 'linear':
+#                 linear_velocity = max(
+#                     linear_velocity - linear_velocity_step, 0)
+#             else:
+#                 angular_velocity = max(
+#                     angular_velocity - angular_velocity_step, 0)
+#             pretty_print("Decreasing velocity", Pretty.YELLOW)
+
+#         elif key == 'z':
+#             #servo_controller.set_servo_speed("arm", -50)
+#             pretty_print("Rotating servo backward", Pretty.BLUE)
+
+#         elif key == 'x':
+#             #servo_controller.set_servo_speed("arm", 0)
+#             pretty_print("Stopping servo", Pretty.RED)
+
+#         elif key == 'c':
+#            # servo_controller.set_servo_speed("arm", 50)
+#             pretty_print("Rotating servo forward", Pretty.BLUE)
+
+#         elif key == '0':
+#             #servo_controller.calibrate()
+#             pretty_print("Calibrating servo", Pretty.YELLOW)
+
+#         elif key == 'q':
+#             pretty_print("Returning to main menu", Pretty.RED)
+#             return
+#         elif key == 't':
+#             claw.clawUp()
+
+#         else:
+#             pretty_print(
+#                 "Invalid input. Use W, A, S, D, M, N, Space, Z, X, C, 0, or Q.", Pretty.RED)
+
+#         update_movement()
+
+#         print_velocities(current_mode, current_direction,
+#                          linear_velocity, angular_velocity)
+
+#         if start_time:
+#             print_timer(start_time)
+
+
+# def display_menu():
+#     pretty_print("\nRobot Control Menu:", Pretty.HEADER)
+#     pretty_print("1. Execute command array", Pretty.BLUE)
+#     pretty_print("2. Manual command-line control", Pretty.BLUE)
+#     pretty_print("3. Calibrate servo", Pretty.BLUE)
+#     pretty_print("Q. Quit", Pretty.BLUE)
+#     pretty_print(
+#         f"{Pretty.GREEN}Enter your choice (1-4, Q to quit): ", Pretty.ENDC)
+
+#     choice = getch().lower() 
+#     print()  
+#     return choice
+
+
+# def main():
+#     try:
+#         motor_controller = MotorController()
+#         led_controller = LEDController()
+#         claw.ItemCInit()
+
+#         motor_controller.initialise_gpio()
+#         led_controller.__init__()
+
+#         command_array = [
+#             (0.2, 0, 2),   
+#             (0, 4.0, 1),   
+#             (0.2, 0, 2),   
+#             (0, -4.0, 1),  
+#             (0.2, 0, 2)    
+#         ]
+
+#         while True:
+#             choice = display_menu()
+
+#             if choice == '1':
+#                 print("Executing command array...")
+#                 execute_command_array(motor_controller, command_array)
+#                 print("Command array execution completed.")
+#             elif choice == '2':
+#                 print("Entering manual command-line control mode...")
+#                 command_line_control(motor_controller)
+#             elif choice == '3':
+#                 print("Calibrating servo...")
+#                 servo_controller.calibrate()
+#             elif choice == 'q':
+#                 print("Quitting program...")
+#                 break
+#             else:
+#                 print("Invalid choice. Please try again.")
+
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         import traceback
+#         traceback.print_exc()
+
+#     finally:
+#         motor_controller.set_velocity(0, 0)
+#         #servo_controller.set_servo_speed("arm", 0)
+#         led_controller.turn_off_all()
+
+#         led_controller.cleanup()
+#         motor_controller.cleanup()
+#         #servo_controller.cleanup()
+
+
+# if __name__ == "__main__":
+#     main()

@@ -18,12 +18,17 @@ def find_lowest_point(mask,size_x,size_y): #This takes the input colour mask and
     mask = cv2.erode(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (5,5),(2,2) )))
     mask = cv2.dilate(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (14,14),(2,2) )))
     mask = cv2.dilate(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (14,14),(2,2) )))
+    max=0
+    i=0
+    j=0
+    biggest=[]
     edges =cv2.Canny(mask,50,50) #It finds all the edges of the masks
     contours,_ =cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #Finds the contours
 
     #Initialising variables to store data
     points_to_check=[]
     valid_rect=[]
+    final_array=[]
 
     #Now we index through the contours
     for i, c in enumerate(contours):
@@ -34,8 +39,22 @@ def find_lowest_point(mask,size_x,size_y): #This takes the input colour mask and
             #Adds the middle value
             valid_rect.append(rect)
             #appends the topleft corner+ width and height
-    
-    return(points_to_check,valid_rect) 
+            
+    for item in valid_rect:
+        if item[2]*item[3]>max:
+            max=item[2]*item[3]
+            biggest=item
+            j=i
+        i=i+1
+        
+    if len(biggest)>0:
+        final_array.append(biggest)
+    i=0 
+    for item in valid_rect:
+        if j!=i:
+            final_array.append(item)
+        
+    return(points_to_check,final_array) 
 
 
 def Find_Aisle(mask,radius_min): #This takes the input colour mask and size restraints
