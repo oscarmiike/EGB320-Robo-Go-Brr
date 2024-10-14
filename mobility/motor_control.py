@@ -20,7 +20,9 @@ References:
 Install pigpio if not already installed:
  - sudo apt-get install pigpio python3-pigpio
  - sudo pigpiod (start the pigpio daemon)
- - sudo systemctl enable pigpiod (enable on pi boot)
+ - sudo systemctl enable/disable pigpiod (enable/disable on pi boot)
+ - sudo systemctl start pigpiod (start service without rebooting)
+ - sudo systemctl status pigpiod (check status)
 
  
 Notes: 
