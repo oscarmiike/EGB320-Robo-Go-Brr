@@ -31,7 +31,7 @@ Left motor  - more effecient at lower PWM duty cycles
 Right motor - more effecient at higher PWM duty cycles
 """
 
-_pigpio = 0
+_pigpio = 1
 _braking_interval = 0.1
 
 class MotorController:
