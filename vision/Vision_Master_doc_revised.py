@@ -17,7 +17,7 @@ def find_lowest_point(mask,size_x,size_y,act): #This takes the input colour mask
         mask = cv2.erode(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (7,7),(2,2) )))
         mask = cv2.dilate(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (15,15),(2,2) )))
         cv2.rectangle(mask, (0, 0), (320, 240), (0,0,0), 2)    
-        cv2.imshow("Changed", mask)
+        # cv2.imshow("Changed", mask)
     edges =cv2.Canny(mask,50,50) #It finds all the edges of the masks
     #cv2.imwrite(filepath+"edges.png",edges)
     contours,__ =cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #Finds the contours
@@ -64,7 +64,7 @@ def find_lowest_point(mask,size_x,size_y,act): #This takes the input colour mask
 
 
 def Pinhole_dist(Height,obstacle_height,bearing):
-    return(abs(obstacle_height/Height*267/math.cos(bearing/180*math.pi)))
+    return(abs(obstacle_height/Height*267/math.cos(bearing/180*math.pi))) ##originally 267  changed to 137
 
 def Pinhole_Width(Width,obstacle_width,bearing):
     return(abs(obstacle_width/Width*267/math.cos(bearing)))
@@ -78,10 +78,11 @@ def find_Bearing(x_pos):
 
 def Find_Aisle(mask,radius_min,radius_max): #This takes the input colour mask and size restraints
     mask = cv2.erode(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (4,4),(2,2) )))
-    mask = cv2.dilate(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (4,4),(2,2) )))
+    mask = cv2.dilate(mask,(cv2.getStructuringElement(cv2.MORPH_RECT, (5,5),(2,2) )))
     cv2.rectangle(mask, (0, 0), (320, 240), (0,0,0), 2)
     edges =cv2.Canny(mask,50,50) #It finds all the edges of the masks
-    #cv2.imshow("Edges",edges)
+    cv2.imshow("Mask", mask)
+    cv2.imshow("Edges",edges)
     contours,_ =cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #Finds the contours
 
     #Initialising variables to store data
@@ -105,7 +106,7 @@ def Colour_checker(image, point):
     checked=False
     valid=0
     ##Starting with left
-    print("The Length is....."+str(len(image[1])))
+    #print("The Length is....."+str(len(image[1])))
     while i<3:
         new_value=point[1]+(sub_value*i)
         if new_value>=240:
@@ -166,8 +167,13 @@ def Vision_init():
     Lower_green = np.array([47,70,40])
     Upper_green = np.array([90,255,255])
 
-    Lower_Mark =np.array([0,0,0])
-    Upper_Mark =np.array([100,222,41]) # Old S value was 175
+ 
+
+    # Lower_Mark =np.array([24,0,0])  # Day Time
+    # Upper_Mark =np.array([53,256,77]) 
+
+    Lower_Mark =np.array([24,0,0])
+    Upper_Mark =np.array([53,256,90])  #NIGHT TIME
 
 
     lower_red = np.array([5,70,100])
@@ -288,11 +294,17 @@ def Main_Outline(frame, hsv_frame):
 
 
     ##################### AISLE MARKERS ###########################
+    mark = mark[0:-1,:]  #Crops the image
     black_bearing=[]
     black_dist=[]
+    prev_bear=0
+    bear_max=0
+    condition=0
+    max_height=1000
+    bearing=0
     if In_Aisle==True:
         #print("in Aisle")
-        rectangles=Find_Aisle(mark, 2, 150)
+        rectangles=Find_Aisle(mark, 9, 150) #4 during day
         i=0
         if len(rectangles)>0:
             for rect in rectangles:
@@ -301,16 +313,31 @@ def Main_Outline(frame, hsv_frame):
                 y=rect[1]
                 cv2.rectangle(frame, (int(rect[0]), int(rect[1])), (int(rect[0]+rect[2]), int(rect[1]+rect[3])), (128,0,128), 2)
                 bear=find_Bearing(rect[0]+rect[2]/2)
+                if abs(bear +prev_bear)>25:
+                    condition=1
+                bear_max=bear_max+bear
+                prev_bear=bear
                 dist=int(Pinhole_dist(rect[3],70,bear))
                 cv2.putText(frame, (str(int(bear))+"deg"), [point,y+25], cv2.FONT_HERSHEY_SIMPLEX, 0.3, [128,0,128], 1, cv2.LINE_AA)
                 cv2.putText(frame, (str(int(dist))+"mm"),[point,y+35], cv2.FONT_HERSHEY_SIMPLEX, 0.3, [128,0,128], 1, cv2.LINE_AA)
                 black_bearing.append(bear)
                 black_dist.append(dist)   
-                print("The Values are Pixel Height: "+str(rect[3])+" Bearing: "+str(bear)+" And distance: "+ str(dist))
+                #print("The Values are Pixel Height: "+str(rect[3])+" Bearing: "+str(bear)+" And distance: "+ str(dist))
                 i=i+1
-        
+            if len(rectangles)<7 and (condition==0):
+                black_bearing.insert(0,(bear_max/len(black_dist)))
+                print("average used")
+            else:
+                for rect in rectangles:
+                    if rect[1]<max_height:
+                        max_height=rect[1]
+                        bearing=find_Bearing(rect[0]+rect[2]/2)
+                black_bearing.insert(0,bearing)
+                        
+            print("The current target is... "+str(black_bearing[0]))
         aisle_number=len(rectangles)/2
-        print("You Are In aisle_number:" +str(aisle_number))
+        #print("You Are In aisle_number:" +str(aisle_number))
+       
     else:
         aisle_number=0
         rectangles=Find_Aisle(mark, 2, 150)
@@ -324,13 +351,16 @@ def Main_Outline(frame, hsv_frame):
                 y=rect[1]
                 cv2.rectangle(frame, (int(rect[0]), int(rect[1])), (int(rect[0]+rect[2]), int(rect[1]+rect[3])), (128,0,128), 2) 
                 bear=find_Bearing(rect[0]+rect[2]/2)
+                bear_max=bear_max+bear
                 dist=Pinhole_dist(rect[3],70,bear)
+                print("The Values are Pixel Height: "+str(rect[3])+" Bearing: "+str(bear)+" And distance: "+ str(dist))
                 cv2.putText(frame, (str(int(bear))+"deg"), [point,y+25], cv2.FONT_HERSHEY_SIMPLEX, 0.3, [128,0,128], 1, cv2.LINE_AA)
                 cv2.putText(frame, (str(int(dist))+"mm"),[point,y+35], cv2.FONT_HERSHEY_SIMPLEX, 0.3, [128,0,128], 1, cv2.LINE_AA)
                 black_bearing.append(bear)
                 black_dist.append(dist)   
                 i=i+1  
                 i=i+1
+            black_bearing.insert(0,(bear_max/len(black_dist)))
 
     ######### I'M IN YOUR WALLS ##########################
     wall_dists=[]

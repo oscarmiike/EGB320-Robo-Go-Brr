@@ -482,7 +482,7 @@ def main():
             print ("you forgot to write an input variable in claw_close()")
 
 
-    robotstate = 39
+    robotstate = 45
     row = 3
     bay = 0
     height=0
