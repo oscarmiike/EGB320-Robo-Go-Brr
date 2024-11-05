@@ -1,5 +1,8 @@
 # RoboGoBrr Python Project
 
+![image](https://github.com/user-attachments/assets/e52ad66c-8fe3-47a9-8967-9f3080f1e38a)
+
+
 ## Overview
 The structure of this project is as below, sub-systems are organised into directories with the `main.py` and `config.py` sitting in the root. 
 
